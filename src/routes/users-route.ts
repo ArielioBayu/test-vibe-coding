@@ -3,6 +3,7 @@ import {
   usersService,
   UserAlreadyExistsError,
   InvalidCredentialsError,
+  UnauthorizedError,
 } from "../services/users-service";
 
 export const usersRoute = new Elysia({ prefix: "/api/users" })
@@ -72,5 +73,42 @@ export const usersRoute = new Elysia({ prefix: "/api/users" })
         email: t.String({ format: "email" }),
         password: t.String({ minLength: 1 }),
       }),
+    }
+  )
+  .post(
+    "/current",
+    async ({ headers, set }) => {
+      try {
+        const authHeader = headers["authorization"] || headers["Authorization"];
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+          set.status = 401;
+          return { error: "Unauthorized" };
+        }
+
+        const token = authHeader.slice(7).trim();
+        if (!token) {
+          set.status = 401;
+          return { error: "Unauthorized" };
+        }
+
+        const user = await usersService.getCurrentUser(token);
+        set.status = 200;
+        return { data: user };
+      } catch (error) {
+        if (
+          error instanceof UnauthorizedError ||
+          (error instanceof Error && error.message === "Unauthorized")
+        ) {
+          set.status = 401;
+          return { error: "Unauthorized" };
+        }
+
+        const errMessage = error instanceof Error ? error.message : String(error);
+        set.status = 500;
+        return {
+          error: "Terjadi kesalahan pada server",
+          details: errMessage,
+        };
+      }
     }
   );
