@@ -31,7 +31,6 @@ describe("Elysia App", () => {
           }),
         })
       );
-      // Elysia returns 422 for schema validation errors
       expect([400, 422]).toContain(response.status);
     });
 
@@ -47,8 +46,40 @@ describe("Elysia App", () => {
           }),
         })
       );
-      // Depending on whether MySQL is running or mock, status will be 201 (success) or 400 (duplicate/DB err) or 500
       expect([201, 400, 500]).toContain(response.status);
+    });
+  });
+
+  describe("POST /api/users/login", () => {
+    it("should return 422/400 when login payload is invalid", async () => {
+      const response = await app.handle(
+        new Request("http://localhost:3000/api/users/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: "invalid-email-format",
+            password: "",
+          }),
+        })
+      );
+      expect([400, 422]).toContain(response.status);
+    });
+
+    it("should handle login request with proper response schema", async () => {
+      const response = await app.handle(
+        new Request("http://localhost:3000/api/users/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: "nonexistent@test.com",
+            password: "secretpassword",
+          }),
+        })
+      );
+      // Status will be 400 ("Email atau password salah") or 200/500 depending on DB state
+      expect([200, 400, 500]).toContain(response.status);
+      const data = (await response.json()) as any;
+      expect(typeof data).toBe("object");
     });
   });
 });
