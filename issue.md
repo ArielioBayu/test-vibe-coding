@@ -1,71 +1,54 @@
-# Project Setup Plan: ElysiaJS + Drizzle ORM + MySQL (Bun Runtime)
+# Feature Plan: Registrasi User Baru (Users API)
 
-## 1. Overview & Objective
-Dokumen ini merupakan panduan implementasi tingkat tinggi (*high-level plan*) untuk menginisialisasi project backend baru menggunakan runtime **Bun**, framework **ElysiaJS**, dan **Drizzle ORM** dengan database **MySQL**.
+## 1. Ringkasan Fitur
+Implementasi fitur registrasi user baru dengan penyimpanan data ke database MySQL menggunakan **Drizzle ORM**, password hashing menggunakan **bcrypt**, dan framework **ElysiaJS** pada runtime **Bun**.
 
-Target pembaca: Programmer atau AI coding agent yang akan mengeksekusi implementasi teknis.
-
----
-
-## 2. Tech Stack
-- **Runtime & Package Manager**: [Bun](https://bun.sh/)
-- **Web Framework**: [ElysiaJS](https://elysiajs.com/)
-- **ORM**: [Drizzle ORM](https://orm.drizzle.team/)
-- **Database Driver**: MySQL driver (`mysql2`)
-- **Language**: TypeScript
+Arsitektur kode harus memisahkan antara **Routing Layer** (`routes`) dan **Business Logic Layer** (`services`).
 
 ---
 
-## 3. High-Level Implementation Phases
+## 2. Spesifikasi Teknis
 
-### Phase 1: Inisialisasi Project & Dependencies
-1. Inisialisasi project Bun baru di direktori ini (`bun init` atau setup `package.json`).
-2. Pasang dependencies utama:
-   - `elysia`
-   - `drizzle-orm`
-   - `mysql2`
-3. Pasang dev dependencies pendukung:
-   - `drizzle-kit` (untuk migrasi dan schema management)
-   - `@types/bun`
+### A. Skema Tabel Database (`users`)
+Tambahkan tabel `users` pada database dengan kolom berikut:
+- `id`: Integer, auto increment, primary key (`serial` di Drizzle MySQL).
+- `name`: VARCHAR(255), NOT NULL.
+- `email`: VARCHAR(255), NOT NULL, UNIQUE.
+- `password`: VARCHAR(255), NOT NULL (disimpan dalam bentuk hash bcrypt).
+- `created_at`: TIMESTAMP, NOT NULL, DEFAULT CURRENT_TIMESTAMP.
 
-### Phase 2: Konfigurasi Environment & Database Connection
-1. Buat template file konfigurasi environment (`.env` dan `.env.example`) yang memuat:
-   - Port server
-   - Kredensial koneksi database MySQL (`DATABASE_URL` atau host, port, user, password, database).
-2. Konfigurasi **Drizzle Kit** (`drizzle.config.ts`):
-   - Tentukan lokasi schema files (`./src/db/schema.ts`).
-   - Tentukan direktori output migrasi (`./drizzle`).
-   - Set dialect ke `mysql`.
+### B. Spesifikasi Endpoint
+- **URL**: `/api/users`
+- **Method**: `POST`
+- **Headers**: `Content-Type: application/json`
 
-### Phase 3: Arsitektur & Struktur Folder
-Terapkan struktur folder modular dan sederhana:
-```text
-.
-├── drizzle/              # File hasil migrasi SQL Drizzle
-├── src/
-│   ├── db/
-│   ├── routes/           # Handler route ElysiaJS
-│   └── index.ts          # Entry point server ElysiaJS
-├── drizzle.config.ts
-├── package.json
-└── tsconfig.json
+#### Request Body
+```json
+{
+  "name": "Bayu",
+  "email": "bayu@gmail.com",
+  "password": "secret"
+}
 ```
 
-### Phase 4: Definisi Schema & Migrasi Database
-1. Buat schema tabel awal di `src/db/schema.ts` (misal: tabel `items` sederhana dengan `id`, `name`, `createdAt`).
-2. Sediakan script npm di `package.json` untuk manajemen database:
-   - `db:generate`: Generate migrasi via `drizzle-kit`.
-   - `db:migrate` / `db:push`: Terapkan skema langsung ke MySQL.
-   - `db:studio`: Buka Drizzle Studio untuk inspeksi data.
+#### Response Body & Status Code
 
-### Phase 5: Setup ElysiaJS Server & Endpoint Contoh
-1. Di `src/index.ts`, inisialisasi instance Elysia app.
-2. Buat endpoint dasar:
-   - `GET /`: Health check / status server.
-   - Minimal 1 contoh route integrasi database (`GET /items`, `POST /items`, `GET /items/:id`) untuk memvalidasi interaksi Drizzle dengan MySQL.
-3. Jalankan server pada port yang ditentukan (default `3000`).
+**1. Sukses (Status Code: `201 Created` / `200 OK`)**
+```json
+{
+  "data": "OK"
+}
+```
 
-### Phase 6: Verifikasi & Testing
-1. Pastikan server dapat berjalan lancar menggunakan `bun run dev` (atau `bun --watch src/index.ts`).
-2. Uji endpoint via automated test (`bun test`).
-3. Pastikan query baca/tulis ke database MySQL terkonfigurasi melalui Drizzle ORM.
+**2. Error - Email Sudah Terdaftar (Status Code: `400 Bad Request` atau `409 Conflict`)**
+```json
+{
+  "error": "Email sudah terdaftar"
+}
+```
+
+---
+
+## 3. Konvensi Struktur Folder & Penamaan File
+- `src/services/users-service.ts`: Business logic (hashing password bcrypt, cek email, insert DB).
+- `src/routes/users-route.ts`: Route handler ElysiaJS untuk `POST /api/users`.

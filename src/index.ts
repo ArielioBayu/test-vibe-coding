@@ -1,5 +1,6 @@
 import { Elysia } from "elysia";
 import { itemRoutes } from "./routes/items";
+import { usersRoute } from "./routes/users-route";
 
 const port = Number(process.env.PORT) || 3000;
 
@@ -9,7 +10,8 @@ export const app = new Elysia()
     message: "Server is running smoothly with Elysia, Drizzle, and MySQL!",
     timestamp: new Date().toISOString(),
   }))
-  .use(itemRoutes);
+  .use(itemRoutes)
+  .use(usersRoute);
 
 if (import.meta.main) {
   app.listen(port);
