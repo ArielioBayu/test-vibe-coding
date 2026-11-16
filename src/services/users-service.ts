@@ -16,6 +16,13 @@ export class InvalidCredentialsError extends Error {
   }
 }
 
+export class UnauthorizedError extends Error {
+  constructor(message: string = "Unauthorized") {
+    super(message);
+    this.name = "UnauthorizedError";
+  }
+}
+
 export interface RegisterUserInput {
   name: string;
   email: string;
@@ -94,6 +101,40 @@ export class UsersService {
     });
 
     return { token };
+  }
+
+  /**
+   * Mengambil data profil pengguna yang sedang login berdasarkan token session.
+   */
+  async getCurrentUser(token: string) {
+    // 1. Cari session berdasarkan token
+    const [session] = await db
+      .select()
+      .from(sessions)
+      .where(eq(sessions.token, token))
+      .limit(1);
+
+    if (!session) {
+      throw new UnauthorizedError("Unauthorized");
+    }
+
+    // 2. Cari data user berdasarkan user_id di session (password tidak disertakan)
+    const [user] = await db
+      .select({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        created_at: users.createdAt,
+      })
+      .from(users)
+      .where(eq(users.id, session.userId))
+      .limit(1);
+
+    if (!user) {
+      throw new UnauthorizedError("Unauthorized");
+    }
+
+    return user;
   }
 }
 

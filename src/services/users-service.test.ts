@@ -2,6 +2,7 @@ import { describe, expect, it } from "bun:test";
 import {
   UserAlreadyExistsError,
   InvalidCredentialsError,
+  UnauthorizedError,
 } from "./users-service";
 
 describe("UsersService", () => {
@@ -31,6 +32,12 @@ describe("UsersService", () => {
     const error = new InvalidCredentialsError();
     expect(error.message).toBe("Email atau password salah");
     expect(error.name).toBe("InvalidCredentialsError");
+  });
+
+  it("should throw UnauthorizedError with message 'Unauthorized'", () => {
+    const error = new UnauthorizedError();
+    expect(error.message).toBe("Unauthorized");
+    expect(error.name).toBe("UnauthorizedError");
   });
 
   it("should generate valid UUID token for sessions", () => {
