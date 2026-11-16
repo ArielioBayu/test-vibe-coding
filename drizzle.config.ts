@@ -5,6 +5,6 @@ export default defineConfig({
   out: "./drizzle",
   dialect: "mysql",
   dbCredentials: {
-    url: process.env.DATABASE_URL || "mysql://root:@localhost:3306/test_vibe_coding",
+    url: process.env.DATABASE_URL || "mysql://root:@localhost:3306/db_belajar_vibe_coding",
   },
 });
