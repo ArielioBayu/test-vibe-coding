@@ -111,4 +111,41 @@ export const usersRoute = new Elysia({ prefix: "/api/users" })
         };
       }
     }
+  )
+  .delete(
+    "/logout",
+    async ({ headers, set }) => {
+      try {
+        const authHeader = headers["authorization"] || headers["Authorization"];
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+          set.status = 401;
+          return { error: "Unauthorized" };
+        }
+
+        const token = authHeader.slice(7).trim();
+        if (!token) {
+          set.status = 401;
+          return { error: "Unauthorized" };
+        }
+
+        await usersService.logoutUser(token);
+        set.status = 200;
+        return { data: "OK" };
+      } catch (error) {
+        if (
+          error instanceof UnauthorizedError ||
+          (error instanceof Error && error.message === "Unauthorized")
+        ) {
+          set.status = 401;
+          return { error: "Unauthorized" };
+        }
+
+        const errMessage = error instanceof Error ? error.message : String(error);
+        set.status = 500;
+        return {
+          error: "Terjadi kesalahan pada server",
+          details: errMessage,
+        };
+      }
+    }
   );

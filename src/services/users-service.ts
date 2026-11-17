@@ -136,6 +136,27 @@ export class UsersService {
 
     return user;
   }
+
+  /**
+   * Menghapus sesi login pengguna berdasarkan token (logout).
+   */
+  async logoutUser(token: string) {
+    // 1. Cek apakah session ada di database
+    const [session] = await db
+      .select({ id: sessions.id })
+      .from(sessions)
+      .where(eq(sessions.token, token))
+      .limit(1);
+
+    if (!session) {
+      throw new UnauthorizedError("Unauthorized");
+    }
+
+    // 2. Hapus session dari tabel sessions
+    await db.delete(sessions).where(eq(sessions.token, token));
+
+    return { success: true };
+  }
 }
 
 export const usersService = new UsersService();
