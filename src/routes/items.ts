@@ -37,7 +37,7 @@ export const itemRoutes = new Elysia({ prefix: "/items" })
     },
     {
       body: t.Object({
-        name: t.String({ minLength: 1 }),
+        name: t.String({ minLength: 1, maxLength: 255 }),
         description: t.Optional(t.String()),
       }),
     }
