@@ -3,9 +3,9 @@ import {
   UserAlreadyExistsError,
   InvalidCredentialsError,
   UnauthorizedError,
-} from "./users-service";
+} from "../src/services/users-service";
 
-describe("UsersService", () => {
+describe("UsersService Unit Tests", () => {
   it("should correctly hash passwords with bcrypt using Bun.password.hash", async () => {
     const plain = "mySecretPassword123";
     const hash = await Bun.password.hash(plain, {

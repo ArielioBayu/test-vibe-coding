@@ -1,58 +1,30 @@
-# Feature Plan: User Logout API (`DELETE /api/users/logout`)
+# Testing Plan: Integration & Unit Test untuk Seluruh API
 
-## 1. Ringkasan Fitur
-Implementasi endpoint API untuk proses logout pengguna. Fitur ini memvalidasi token sesi pengguna melalui header HTTP `Authorization: Bearer <token>`, kemudian menghapus record sesi yang cocok dari tabel `sessions` di database MySQL. Setelah sesi terhapus, token tersebut tidak lagi dapat digunakan untuk mengakses endpoint terproteksi.
+## 1. Tujuan & Gambaran Umum
+Membuat rangkaian test otomatis (*automated test*) yang komprehensif untuk seluruh endpoint API yang tersedia pada aplikasi menggunakan **Bun Test** (`bun test`).
 
-Arsitektur kode harus memisahkan antara layer **Routing** (`routes`) dan layer **Business Logic** (`services`).
-
----
-
-## 2. Spesifikasi Teknis
-
-### A. Spesifikasi Endpoint
-- **URL**: `/api/users/logout`
-- **Method**: `DELETE`
-- **Headers Wajib**:
-  - `Authorization: Bearer <token>` (token UUID sesi login yang tersimpan di tabel `sessions`)
-
-### B. Format Request & Response
-
-#### 1. Request
-Tidak memerlukan request body. Otentikasi dan identifikasi sesi dilakukan melalui header `Authorization`.
-
-#### 2. Response Sukses (Status Code: `200 OK`)
-Mengembalikan konfirmasi bahwa logout berhasil dan record sesi telah terhapus dari tabel `sessions`:
-```json
-{
-  "data": "OK"
-}
-```
-
-#### 3. Response Error (Status Code: `401 Unauthorized`)
-Jika header `Authorization` tidak disertakan, format bukan Bearer token, atau token tidak ditemukan di tabel `sessions`:
-```json
-{
-  "error": "Unauthorized"
-}
-```
+Semua file test harus ditempatkan di dalam folder khusus `tests/` pada root project. Untuk menjaga konsistensi dan independensi antar pengujian, **setiap skenario test wajib membersihkan data di database terlebih dahulu** sebelum skenario dijalankan.
 
 ---
 
-## 3. Konvensi Struktur Folder & Penamaan File
+## 2. Aturan Umum Implementasi
 
-Tetap gunakan struktur direktori modular yang telah ada:
+1. **Lokasi Folder**:
+   - Simpan seluruh file test di dalam folder `tests/` (misal: `tests/health.test.ts`, `tests/items.test.ts`, `tests/users.test.ts`, `tests/users-service.test.ts`).
+2. **Test Runner**:
+   - Gunakan `bun:test` (`describe`, `it`, `expect`, `beforeEach`, dll.) dan jalankan dengan `bun test`.
+3. **Konsistensi Data (Database Cleanup)**:
+   - Setiap skenario test diawali dengan kondisi database bersih (`sessions` -> `users` -> `items`) menggunakan helper `tests/test-helper.ts`.
+4. **Cakupan Pengujian**:
+   - Verifikasi HTTP status code, format response body (sukses & error), validasi input, serta kondisi data di database.
 
-```text
-src/
-├── services/
-│   ├── users-service.ts       # Tambahkan method logoutUser(token)
-│   └── users-service.test.ts  # Unit test
-├── routes/
-│   └── users-route.ts         # Tambahkan handler DELETE /logout
-├── index.ts                   # Entry point server ElysiaJS
-└── index.test.ts              # Integration test untuk DELETE /api/users/logout
-```
+---
 
-> **Aturan Penamaan File**:
-> - File routing menggunakan format `*-route.ts` (`src/routes/users-route.ts`).
-> - File service menggunakan format `*-service.ts` (`src/services/users-service.ts`).
+## 3. Daftar Skenario Test per API
+- **Health Check API**: `GET /`
+- **Items API**: `GET /items`, `POST /items`, `GET /items/:id`
+- **Users API**:
+  - `POST /api/users` (Registrasi user baru & validasi)
+  - `POST /api/users/login` (Login, multi-sesi, dan validasi)
+  - `POST /api/users/current` (Get current user dengan Bearer token)
+  - `DELETE /api/users/logout` (Logout & penghapusan sesi)
