@@ -120,4 +120,43 @@ describe("Elysia App", () => {
       expect([401, 500]).toContain(response.status);
     });
   });
+
+  describe("DELETE /api/users/logout", () => {
+    it("should return 401 when Authorization header is missing", async () => {
+      const response = await app.handle(
+        new Request("http://localhost:3000/api/users/logout", {
+          method: "DELETE",
+        })
+      );
+      expect(response.status).toBe(401);
+      const data = (await response.json()) as { error: string };
+      expect(data.error).toBe("Unauthorized");
+    });
+
+    it("should return 401 when Authorization header format is not Bearer", async () => {
+      const response = await app.handle(
+        new Request("http://localhost:3000/api/users/logout", {
+          method: "DELETE",
+          headers: {
+            Authorization: "Basic some-credentials",
+          },
+        })
+      );
+      expect(response.status).toBe(401);
+      const data = (await response.json()) as { error: string };
+      expect(data.error).toBe("Unauthorized");
+    });
+
+    it("should return 401 when Bearer token is invalid/fake (or 500 if DB offline)", async () => {
+      const response = await app.handle(
+        new Request("http://localhost:3000/api/users/logout", {
+          method: "DELETE",
+          headers: {
+            Authorization: "Bearer non-existent-token-12345",
+          },
+        })
+      );
+      expect([401, 500]).toContain(response.status);
+    });
+  });
 });
